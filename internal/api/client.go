@@ -56,6 +56,11 @@ func (c *Client) Get(path string, dest any) (*http.Response, error) {
 	return c.doWithHeaders("GET", path, nil, dest, nil)
 }
 
+// GetWithHeaders performs an authenticated GET with custom headers.
+func (c *Client) GetWithHeaders(path string, dest any, headers map[string]string) (*http.Response, error) {
+	return c.doWithHeaders("GET", path, nil, dest, headers)
+}
+
 // Post performs an authenticated POST request with a JSON body.
 func (c *Client) Post(path string, body any, dest any) (*http.Response, error) {
 	return c.doWithHeaders("POST", path, body, dest, nil)
