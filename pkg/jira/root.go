@@ -4,6 +4,7 @@ import (
 	"github.com/PigZyj2333/atlassian-cli/pkg/cmdutil"
 	"github.com/PigZyj2333/atlassian-cli/pkg/jira/auth"
 	"github.com/PigZyj2333/atlassian-cli/pkg/jira/issue"
+	searchcmd "github.com/PigZyj2333/atlassian-cli/pkg/jira/search"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +27,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(issue.NewCmdIssue(f))
+	cmd.AddCommand(searchcmd.NewCmdSearch(f))
 
 	return cmd
 }
