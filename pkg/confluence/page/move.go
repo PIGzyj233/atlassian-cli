@@ -3,6 +3,7 @@ package page
 import (
 	"fmt"
 
+	"github.com/PigZyj2333/atlassian-cli/internal/api"
 	"github.com/PigZyj2333/atlassian-cli/internal/output"
 	"github.com/PigZyj2333/atlassian-cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
@@ -32,8 +33,13 @@ func NewCmdMove(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			targetID := targetParentID
-			if targetID == "" {
-				targetID = targetSpace
+			if targetID == "" && targetSpace != "" {
+				// Cross-space move to root: look up the space homepage
+				homepageID, err := fetchSpaceHomepage(client, targetSpace)
+				if err != nil {
+					return fmt.Errorf("looking up space %q: %w", targetSpace, err)
+				}
+				targetID = homepageID
 			}
 
 			path := client.ConfluenceAPIPath(
@@ -51,8 +57,32 @@ func NewCmdMove(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&targetParentID, "target-parent-id", "", "Target parent page ID")
-	cmd.Flags().StringVar(&targetSpace, "target-space", "", "Target space key")
+	cmd.Flags().StringVar(&targetSpace, "target-space", "", "Target space key (moves to space root if no parent specified)")
 	cmd.Flags().StringVar(&position, "position", "append", "Position: append, above, below")
 
 	return cmd
+}
+
+// fetchSpaceHomepage looks up the space homepage ID for cross-space moves.
+func fetchSpaceHomepage(client *api.Client, spaceKey string) (string, error) {
+	path := client.ConfluenceAPIPath("space/" + spaceKey)
+	rb := api.NewRequestBuilder(path).Query("expand", "homepage")
+
+	var result map[string]any
+	_, err := client.Get(rb.BuildPath(), &result)
+	if err != nil {
+		return "", err
+	}
+
+	hp, ok := result["homepage"].(map[string]any)
+	if !ok {
+		return "", fmt.Errorf("space %s has no homepage", spaceKey)
+	}
+
+	id, ok := hp["id"].(string)
+	if !ok {
+		return "", fmt.Errorf("space %s homepage has no ID", spaceKey)
+	}
+
+	return id, nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/PigZyj2333/atlassian-cli/internal/convert"
 	"github.com/PigZyj2333/atlassian-cli/internal/output"
 	"github.com/PigZyj2333/atlassian-cli/pkg/cmdutil"
+	"github.com/pmezard/go-difflib/difflib"
 	"github.com/spf13/cobra"
 )
 
@@ -48,7 +49,8 @@ func NewCmdDiff(f *cmdutil.Factory) *cobra.Command {
 			fromMD := convert.StorageToMarkdown(fromContent)
 			toMD := convert.StorageToMarkdown(toContent)
 
-			// Compute unified diff
+			// Compute proper unified diff using Myers algorithm
+			// (matches Python reference: difflib.unified_diff at pages.py:1187)
 			diff := unifiedDiff(
 				strings.Split(fromMD, "\n"),
 				strings.Split(toMD, "\n"),
@@ -92,38 +94,25 @@ func fetchVersionContent(client *api.Client, pageID string, version int) (string
 	return value, nil
 }
 
-// unifiedDiff produces a simple unified diff output.
+// unifiedDiff produces a proper unified diff with hunk headers using Myers algorithm.
 func unifiedDiff(from, to []string, fromLabel, toLabel string) string {
-	var result strings.Builder
-	result.WriteString(fmt.Sprintf("--- %s\n", fromLabel))
-	result.WriteString(fmt.Sprintf("+++ %s\n", toLabel))
-
-	// Simple line-by-line diff (not a full Myers algorithm, but sufficient)
-	maxLen := len(from)
-	if len(to) > maxLen {
-		maxLen = len(to)
+	// Append newline to each line for difflib compatibility
+	fromLines := make([]string, len(from))
+	toLines := make([]string, len(to))
+	for i, l := range from {
+		fromLines[i] = l + "\n"
+	}
+	for i, l := range to {
+		toLines[i] = l + "\n"
 	}
 
-	for i := 0; i < maxLen; i++ {
-		var fromLine, toLine string
-		if i < len(from) {
-			fromLine = from[i]
-		}
-		if i < len(to) {
-			toLine = to[i]
-		}
-
-		if i >= len(from) {
-			result.WriteString("+" + toLine + "\n")
-		} else if i >= len(to) {
-			result.WriteString("-" + fromLine + "\n")
-		} else if fromLine != toLine {
-			result.WriteString("-" + fromLine + "\n")
-			result.WriteString("+" + toLine + "\n")
-		} else {
-			result.WriteString(" " + fromLine + "\n")
-		}
+	diff := difflib.UnifiedDiff{
+		A:        fromLines,
+		B:        toLines,
+		FromFile: fromLabel,
+		ToFile:   toLabel,
+		Context:  3,
 	}
-
-	return result.String()
+	text, _ := difflib.GetUnifiedDiffString(diff)
+	return text
 }

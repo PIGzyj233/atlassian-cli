@@ -1,6 +1,10 @@
 package user
 
 import (
+	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/PigZyj2333/atlassian-cli/internal/api"
 	"github.com/PigZyj2333/atlassian-cli/internal/output"
 	"github.com/PigZyj2333/atlassian-cli/pkg/cmdutil"
@@ -37,13 +41,13 @@ func NewCmdSearch(f *cmdutil.Factory) *cobra.Command {
 
 				_, err = client.Get(path, &result)
 			} else {
-				// Server/DC: use user search API
-				path := api.NewRequestBuilder("/rest/api/user/search").
-					Query("username", query).
-					QueryInt("maxResults", limit).
-					BuildPath()
-
-				_, err = client.Get(path, &result)
+				// Server/DC: search via group member API with client-side filtering.
+				// Matches Python reference: search.py:138-195 (_search_user_server_dc).
+				members, searchErr := searchGroupMembers(client, query, group, limit)
+				if searchErr != nil {
+					return searchErr
+				}
+				result = map[string]any{"results": members, "size": len(members)}
 			}
 
 			if err != nil {
@@ -58,4 +62,53 @@ func NewCmdSearch(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&group, "group", "confluence-users", "Group to search within (Server/DC)")
 
 	return cmd
+}
+
+// searchGroupMembers fetches group members and filters by query, with pagination.
+func searchGroupMembers(client *api.Client, query, group string, limit int) ([]any, error) {
+	queryLower := strings.ToLower(query)
+	var matches []any
+	start := 0
+	pageSize := 200
+
+	for len(matches) < limit {
+		path := api.NewRequestBuilder(
+			fmt.Sprintf("/rest/api/group/%s/member", url.PathEscape(group)),
+		).
+			QueryInt("start", start).
+			QueryInt("limit", pageSize).
+			BuildPath()
+
+		var page map[string]any
+		_, err := client.Get(path, &page)
+		if err != nil {
+			return nil, err
+		}
+
+		members, _ := page["results"].([]any)
+		for _, m := range members {
+			member, ok := m.(map[string]any)
+			if !ok {
+				continue
+			}
+			display, _ := member["displayName"].(string)
+			username, _ := member["username"].(string)
+			if strings.Contains(strings.ToLower(display), queryLower) ||
+				strings.Contains(strings.ToLower(username), queryLower) {
+				matches = append(matches, m)
+				if len(matches) >= limit {
+					break
+				}
+			}
+		}
+
+		// Check for pagination
+		links, _ := page["_links"].(map[string]any)
+		if _, hasNext := links["next"]; !hasNext || len(members) == 0 {
+			break
+		}
+		start += len(members)
+	}
+
+	return matches, nil
 }

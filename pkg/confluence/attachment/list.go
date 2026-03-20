@@ -29,17 +29,16 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			rb := api.NewRequestBuilder(path).
 				QueryInt("limit", limit)
 
-			if filename != "" {
-				rb.Query("filename", filename)
-			}
-			if mediaType != "" {
-				rb.Query("mediaType", mediaType)
-			}
-
 			var result map[string]any
 			_, err = client.Get(rb.BuildPath(), &result)
 			if err != nil {
 				return err
+			}
+
+			// V1 API doesn't support server-side filtering for filename/mediaType.
+			// Apply client-side filtering (matches Python reference: attachments.py:399-420).
+			if filename != "" || mediaType != "" {
+				result = filterAttachments(result, filename, mediaType)
 			}
 
 			return output.Print(cmd, result)
@@ -47,8 +46,39 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVar(&limit, "limit", 50, "Maximum results to return")
-	cmd.Flags().StringVar(&filename, "filename", "", "Filter by filename")
-	cmd.Flags().StringVar(&mediaType, "media-type", "", "Filter by media type")
+	cmd.Flags().StringVar(&filename, "filename", "", "Filter by filename (exact match, client-side)")
+	cmd.Flags().StringVar(&mediaType, "media-type", "", "Filter by media type (exact match, client-side)")
 
 	return cmd
+}
+
+// filterAttachments applies client-side filtering on attachment results.
+func filterAttachments(result map[string]any, filename, mediaType string) map[string]any {
+	results, ok := result["results"].([]any)
+	if !ok {
+		return result
+	}
+
+	var filtered []any
+	for _, item := range results {
+		att, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if filename != "" {
+			if title, _ := att["title"].(string); title != filename {
+				continue
+			}
+		}
+		if mediaType != "" {
+			if mt, _ := att["mediaType"].(string); mt != mediaType {
+				continue
+			}
+		}
+		filtered = append(filtered, item)
+	}
+
+	result["results"] = filtered
+	result["size"] = len(filtered)
+	return result
 }

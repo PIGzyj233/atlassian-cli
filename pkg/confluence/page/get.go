@@ -36,9 +36,9 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 			var result map[string]any
 
 			if pageID != "" {
-				result, err = fetchPageByID(client, pageID, raw)
+				result, err = fetchPageByID(client, pageID, raw, includeMetadata)
 			} else {
-				result, err = fetchPageByTitle(client, space, title, raw)
+				result, err = fetchPageByTitle(client, space, title, raw, includeMetadata)
 			}
 			if err != nil {
 				return err
@@ -51,16 +51,20 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&pageID, "id", "", "Page ID")
 	cmd.Flags().StringVar(&title, "title", "", "Page title")
 	cmd.Flags().StringVar(&space, "space", "", "Space key")
-	cmd.Flags().BoolVar(&includeMetadata, "include-metadata", false, "Include page metadata")
+	cmd.Flags().BoolVar(&includeMetadata, "include-metadata", false, "Include page metadata (labels, properties, history)")
 	cmd.Flags().BoolVar(&raw, "raw", false, "Return raw storage format (no Markdown conversion)")
 
 	return cmd
 }
 
-func fetchPageByID(client *api.Client, pageID string, raw bool) (map[string]any, error) {
+func fetchPageByID(client *api.Client, pageID string, raw, includeMetadata bool) (map[string]any, error) {
 	path := client.ConfluenceAPIPath("content/" + pageID)
+	expand := "body.storage,version,space,children.attachment"
+	if includeMetadata {
+		expand += ",metadata.labels,metadata.properties,history"
+	}
 	rb := api.NewRequestBuilder(path).
-		Query("expand", "body.storage,version,space,children.attachment")
+		Query("expand", expand)
 
 	var result map[string]any
 	_, err := client.Get(rb.BuildPath(), &result)
@@ -75,12 +79,16 @@ func fetchPageByID(client *api.Client, pageID string, raw bool) (map[string]any,
 	return result, nil
 }
 
-func fetchPageByTitle(client *api.Client, space, title string, raw bool) (map[string]any, error) {
+func fetchPageByTitle(client *api.Client, space, title string, raw, includeMetadata bool) (map[string]any, error) {
 	path := client.ConfluenceAPIPath("content")
+	expand := "body.storage,version,space"
+	if includeMetadata {
+		expand += ",metadata.labels,metadata.properties,history"
+	}
 	rb := api.NewRequestBuilder(path).
 		Query("spaceKey", space).
 		Query("title", title).
-		Query("expand", "body.storage,version,space")
+		Query("expand", expand)
 
 	var result map[string]any
 	_, err := client.Get(rb.BuildPath(), &result)

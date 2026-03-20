@@ -1,6 +1,8 @@
 package page
 
 import (
+	"fmt"
+
 	"github.com/PigZyj2333/atlassian-cli/internal/api"
 	"github.com/PigZyj2333/atlassian-cli/internal/convert"
 	"github.com/PigZyj2333/atlassian-cli/internal/output"
@@ -60,7 +62,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			// Set emoji via content property if provided
 			if emoji != "" {
 				if id, ok := result["id"].(string); ok {
-					setPageEmoji(client, id, emoji)
+					if err := setPageEmoji(client, id, emoji); err != nil {
+						return fmt.Errorf("setting emoji: %w", err)
+					}
 				}
 			}
 
@@ -81,13 +85,52 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-// setPageEmoji sets the emoji-title-published content property on a page.
-func setPageEmoji(client *api.Client, pageID, emoji string) {
-	path := client.ConfluenceAPIPath("content/" + pageID + "/property/emoji-title-published")
-	payload := map[string]any{
-		"key":   "emoji-title-published",
-		"value": emoji,
+// setPageEmoji sets both published and draft emoji content properties.
+// Matches Python reference: pages.py:257-296 (_set_page_emoji).
+func setPageEmoji(client *api.Client, pageID, emoji string) error {
+	for _, key := range []string{"emoji-title-published", "emoji-title-draft"} {
+		if err := setContentProperty(client, pageID, key, emoji); err != nil {
+			return fmt.Errorf("setting %s: %w", key, err)
+		}
 	}
-	client.Post(path, payload, nil)
+	return nil
 }
 
+// deletePageEmoji removes both emoji content properties.
+func deletePageEmoji(client *api.Client, pageID string) {
+	for _, key := range []string{"emoji-title-published", "emoji-title-draft"} {
+		path := client.ConfluenceAPIPath("content/" + pageID + "/property/" + key)
+		client.Delete(path, nil) //nolint:errcheck // best-effort removal
+	}
+}
+
+// setContentProperty creates or updates a content property with version tracking.
+// Matches Python reference: pages.py:200-255 (_set_single_property).
+func setContentProperty(client *api.Client, pageID, key, value string) error {
+	propPath := client.ConfluenceAPIPath("content/" + pageID + "/property/" + key)
+
+	// Try to GET existing property for version
+	var existing map[string]any
+	_, getErr := client.Get(propPath, &existing)
+
+	payload := map[string]any{
+		"key":   key,
+		"value": value,
+	}
+
+	if getErr == nil && existing != nil {
+		// Property exists — PUT with incremented version
+		if ver, ok := existing["version"].(map[string]any); ok {
+			if num, ok := ver["number"].(float64); ok {
+				payload["version"] = map[string]any{"number": int(num) + 1}
+			}
+		}
+		_, err := client.Put(propPath, payload, nil)
+		return err
+	}
+
+	// Property doesn't exist — POST to create
+	propsPath := client.ConfluenceAPIPath("content/" + pageID + "/property")
+	_, err := client.Post(propsPath, payload, nil)
+	return err
+}

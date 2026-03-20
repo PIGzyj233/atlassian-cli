@@ -71,10 +71,15 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			// Set emoji via content property if provided
+			// Set or remove emoji via content property
 			if cmd.Flags().Changed("emoji") {
 				if emoji != "" {
-					setPageEmoji(client, pageID, emoji)
+					if err := setPageEmoji(client, pageID, emoji); err != nil {
+						return fmt.Errorf("setting emoji: %w", err)
+					}
+				} else {
+					// Empty string means remove emoji
+					deletePageEmoji(client, pageID)
 				}
 			}
 
