@@ -5245,7 +5245,7 @@ git commit -m "feat(confluence): add analytics views command (Cloud only)"
 **Files:**
 - Create: `cli/.goreleaser.yml`
 
-- [ ] **Step 1: Write goreleaser config**
+- [x] **Step 1: Write goreleaser config**
 
 ```yaml
 # cli/.goreleaser.yml
@@ -5311,11 +5311,11 @@ changelog:
       - "^chore:"
 ```
 
-- [ ] **Step 2: Verify goreleaser config**
+- [x] **Step 2: Verify goreleaser config**
 
 Run: `cd cli && goreleaser check` (if goreleaser installed) or `cd cli && go build ./cmd/jira && go build ./cmd/confluence`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add cli/.goreleaser.yml
@@ -5331,7 +5331,7 @@ git commit -m "chore: add goreleaser configuration for cross-platform builds"
 
 > This test verifies the full binary works end-to-end with a mock server.
 
-- [ ] **Step 1: Write e2e test**
+- [x] **Step 1: Write e2e test**
 
 ```go
 // cli/e2e_test.go
@@ -5413,12 +5413,12 @@ func TestConfluenceBinary_Help(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run e2e test**
+- [x] **Step 2: Run e2e test**
 
 Run: `cd cli && go test -v -run TestJiraBinary`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add cli/e2e_test.go
@@ -5429,27 +5429,27 @@ git commit -m "test: add end-to-end smoke tests for both CLI binaries"
 
 ### Task 50: Final Integration — Verify All Commands Registered
 
-- [ ] **Step 1: Build both binaries**
+- [x] **Step 1: Build both binaries**
 
 Run: `cd cli && make build`
 Expected: Clean build, no errors
 
-- [ ] **Step 2: Verify jira command tree**
+- [x] **Step 2: Verify jira command tree**
 
 Run: `cd cli && ./bin/jira --help`
 Expected output includes: `auth`, `issue`, `search`, `comment`, `field`, `transition`, `board`, `sprint`, `project`, `worklog`, `watcher`, `link`, `attachment`, `sla`, `dev`, `changelog`, `form`, `servicedesk`, `user`, `epic`
 
-- [ ] **Step 3: Verify confluence command tree**
+- [x] **Step 3: Verify confluence command tree**
 
 Run: `cd cli && ./bin/confluence --help`
 Expected output includes: `auth`, `page`, `search`, `comment`, `label`, `attachment`, `user`, `analytics`
 
-- [ ] **Step 4: Run full test suite**
+- [x] **Step 4: Run full test suite**
 
 Run: `cd cli && make test`
 Expected: All tests PASS
 
-- [ ] **Step 5: Final commit**
+- [x] **Step 5: Final commit**
 
 ```bash
 git add -A cli/
