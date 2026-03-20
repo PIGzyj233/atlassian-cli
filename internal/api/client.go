@@ -138,9 +138,9 @@ func (c *Client) do(method, path string, body any, dest any) (*http.Response, er
 			return resp, parseAPIError(resp)
 		}
 
-		// Success — decode if dest provided
+		// Success — always close body (prevents leak when dest == nil)
+		defer resp.Body.Close()
 		if dest != nil {
-			defer resp.Body.Close()
 			if err := json.NewDecoder(resp.Body).Decode(dest); err != nil {
 				return resp, fmt.Errorf("decoding response: %w", err)
 			}

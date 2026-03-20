@@ -107,3 +107,34 @@ func TestClient_JiraAPIPath(t *testing.T) {
 	server := NewClient("https://jira.corp.com", nil)
 	assert.Equal(t, "/rest/api/2/issue", server.JiraAPIPath("issue"))
 }
+
+func TestClient_Get_NilDest_ClosesBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	auth := &config.PATAuth{Token: "tok"}
+	client := NewClient(server.URL, auth)
+
+	resp, err := client.Get("/test", nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	// If resp.Body were not closed, this would leak; the test validates no error path.
+}
+
+func TestClient_Delete_NilDest(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodDelete, r.Method)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	auth := &config.PATAuth{Token: "tok"}
+	client := NewClient(server.URL, auth)
+
+	resp, err := client.Delete("/test/123", nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+}

@@ -101,19 +101,134 @@ func MarkdownToADF(md string) map[string]any {
 		i++
 	}
 
+	// Ensure at least one content node (matches Python reference implementation)
+	if len(content) == 0 {
+		content = append(content, map[string]any{
+			"type":    "paragraph",
+			"content": []any{},
+		})
+	}
+
 	doc["content"] = content
 	return doc
 }
 
 var headingRe = regexp.MustCompile(`^(#{1,6})\s+(.+)$`)
 
-// inlineToADF converts inline Markdown to ADF inline nodes.
-// For v1, wraps as plain text. Bold/italic/code parsing can be added later.
+// inlineRe matches Markdown inline formatting tokens.
+// Order matters: code → bold → strikethrough → link → italic.
+var inlineRe = regexp.MustCompile(
+	"`([^`]+)`" + // inline code
+		`|\*\*(.+?)\*\*` + // bold
+		`|~~(.+?)~~` + // strikethrough
+		`|\[([^\]]+)\]\(([^)]+)\)` + // link [text](url)
+		`|(?:^|[^*])\*([^*]+?)\*(?:[^*]|$)`, // italic (non-greedy, avoid ** overlap)
+)
+
+// inlineToADF converts inline Markdown to ADF inline nodes with marks.
+// Handles bold (**), italic (*), inline code (`), links, and strikethrough (~~).
 func inlineToADF(text string) []any {
+	if text == "" {
+		return []any{}
+	}
+
 	var nodes []any
-	if text != "" {
+	pos := 0
+
+	for _, loc := range inlineRe.FindAllStringSubmatchIndex(text, -1) {
+		matchStart := loc[0]
+		matchEnd := loc[1]
+
+		// Add plain text before this match
+		if matchStart > pos {
+			plain := text[pos:matchStart]
+			if plain != "" {
+				nodes = append(nodes, map[string]any{"type": "text", "text": plain})
+			}
+		}
+
+		// Determine which group matched (groups are at indices 2/3, 4/5, 6/7, 8/9+10/11, 12/13)
+		switch {
+		case loc[2] >= 0 && loc[3] >= 0: // inline code
+			nodes = append(nodes, map[string]any{
+				"type":  "text",
+				"text":  text[loc[2]:loc[3]],
+				"marks": []any{map[string]any{"type": "code"}},
+			})
+		case loc[4] >= 0 && loc[5] >= 0: // bold
+			nodes = append(nodes, map[string]any{
+				"type":  "text",
+				"text":  text[loc[4]:loc[5]],
+				"marks": []any{map[string]any{"type": "strong"}},
+			})
+		case loc[6] >= 0 && loc[7] >= 0: // strikethrough
+			nodes = append(nodes, map[string]any{
+				"type":  "text",
+				"text":  text[loc[6]:loc[7]],
+				"marks": []any{map[string]any{"type": "strike"}},
+			})
+		case loc[8] >= 0 && loc[9] >= 0: // link text
+			href := text[loc[10]:loc[11]]
+			nodes = append(nodes, map[string]any{
+				"type": "text",
+				"text": text[loc[8]:loc[9]],
+				"marks": []any{map[string]any{
+					"type":  "link",
+					"attrs": map[string]any{"href": href},
+				}},
+			})
+		case loc[12] >= 0 && loc[13] >= 0: // italic
+			// The italic regex may capture a leading/trailing non-* char;
+			// adjust matchStart/matchEnd to only consume the *...* portion.
+			italicContent := text[loc[12]:loc[13]]
+			// Find exact position of *content* within the overall match
+			starIdx := strings.Index(text[matchStart:matchEnd], "*"+italicContent+"*")
+			if starIdx >= 0 {
+				actualStart := matchStart + starIdx
+				actualEnd := actualStart + len(italicContent) + 2 // +2 for the two *
+				// Emit any prefix char before the *
+				if actualStart > pos {
+					prefix := text[pos:actualStart]
+					if matchStart > pos {
+						// We already emitted text[pos:matchStart] above, but for italic
+						// the match may include a leading char. Re-check.
+					}
+					if prefix != "" && actualStart > matchStart {
+						// Remove already-emitted plain text, add back with correct boundary
+						// Actually the plain text above used matchStart, so if actualStart > matchStart,
+						// we need to emit text[matchStart:actualStart]
+						if actualStart > matchStart {
+							nodes = append(nodes, map[string]any{"type": "text", "text": text[matchStart:actualStart]})
+						}
+					}
+				}
+				matchEnd = actualEnd
+			}
+			nodes = append(nodes, map[string]any{
+				"type":  "text",
+				"text":  italicContent,
+				"marks": []any{map[string]any{"type": "em"}},
+			})
+			pos = matchEnd
+			continue
+		}
+
+		pos = matchEnd
+	}
+
+	// Remaining text after last match
+	if pos < len(text) {
+		remaining := text[pos:]
+		if remaining != "" {
+			nodes = append(nodes, map[string]any{"type": "text", "text": remaining})
+		}
+	}
+
+	// If nothing matched, return whole text as plain
+	if len(nodes) == 0 {
 		nodes = append(nodes, map[string]any{"type": "text", "text": text})
 	}
+
 	return nodes
 }
 
