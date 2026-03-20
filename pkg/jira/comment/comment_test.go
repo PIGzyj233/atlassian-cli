@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/PigZyj2333/atlassian-cli/internal/api"
@@ -117,6 +118,43 @@ func TestAddComment_NoVisibility(t *testing.T) {
 	assert.Equal(t, "10004", result["id"])
 }
 
+func TestAddComment_Cloud_ADF(t *testing.T) {
+	// Use .atlassian.net in BaseURL to trigger IsCloud() → ADF conversion.
+	// The handler uses HasSuffix for path matching since the .atlassian.net
+	// trick adds an extra path segment before the API path.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.True(t, strings.HasSuffix(r.URL.Path, "/rest/api/3/issue/TEST-1/comment"))
+
+		body, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+
+		var payload map[string]any
+		require.NoError(t, json.Unmarshal(body, &payload))
+
+		// Body must be an ADF document, not a plain string
+		adfBody, ok := payload["body"].(map[string]any)
+		require.True(t, ok, "body should be an ADF document object, not a string")
+		assert.Equal(t, "doc", adfBody["type"])
+		assert.Equal(t, float64(1), adfBody["version"])
+		content, ok := adfBody["content"].([]any)
+		require.True(t, ok)
+		require.NotEmpty(t, content)
+
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"id": "10010"}))
+	}))
+	defer server.Close()
+
+	auth := &config.PATAuth{Token: "t"}
+	client := api.NewClient(server.URL, auth)
+	client.BaseURL = server.URL + "/.atlassian.net"
+
+	result, err := addComment(client, "TEST-1", "Hello world", "")
+	require.NoError(t, err)
+	assert.Equal(t, "10010", result["id"])
+}
+
 func TestEditComment(t *testing.T) {
 	mockResponse := map[string]any{
 		"id":      "10001",
@@ -152,6 +190,37 @@ func TestEditComment(t *testing.T) {
 	assert.Equal(t, "Updated comment", result["body"])
 }
 
+func TestEditComment_Cloud_ADF(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPut, r.Method)
+		assert.True(t, strings.HasSuffix(r.URL.Path, "/rest/api/3/issue/TEST-1/comment/10001"))
+
+		body, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+
+		var payload map[string]any
+		require.NoError(t, json.Unmarshal(body, &payload))
+
+		// Body must be ADF on Cloud
+		adfBody, ok := payload["body"].(map[string]any)
+		require.True(t, ok, "body should be an ADF document object, not a string")
+		assert.Equal(t, "doc", adfBody["type"])
+		assert.Equal(t, float64(1), adfBody["version"])
+
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"id": "10001"}))
+	}))
+	defer server.Close()
+
+	auth := &config.PATAuth{Token: "t"}
+	client := api.NewClient(server.URL, auth)
+	client.BaseURL = server.URL + "/.atlassian.net"
+
+	result, err := editComment(client, "TEST-1", "10001", "Updated text", "")
+	require.NoError(t, err)
+	assert.Equal(t, "10001", result["id"])
+}
+
 func TestAddServiceDeskComment(t *testing.T) {
 	mockResponse := map[string]any{
 		"id":     "10005",
@@ -162,6 +231,9 @@ func TestAddServiceDeskComment(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPost, r.Method)
 		assert.Equal(t, "/rest/servicedeskapi/request/TEST-1/comment", r.URL.Path)
+
+		// Verify the X-ExperimentalApi header is sent
+		assert.Equal(t, "opt-in", r.Header.Get("X-ExperimentalApi"))
 
 		body, err := io.ReadAll(r.Body)
 		require.NoError(t, err)

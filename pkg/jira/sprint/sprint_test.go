@@ -95,7 +95,7 @@ func TestUpdateSprint(t *testing.T) {
 	}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, http.MethodPut, r.Method)
 		assert.Equal(t, "/rest/agile/1.0/sprint/100", r.URL.Path)
 
 		body, err := io.ReadAll(r.Body)

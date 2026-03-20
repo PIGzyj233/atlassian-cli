@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/PigZyj2333/atlassian-cli/internal/api"
+	"github.com/PigZyj2333/atlassian-cli/internal/convert"
 	"github.com/PigZyj2333/atlassian-cli/internal/output"
 	"github.com/PigZyj2333/atlassian-cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
@@ -41,7 +42,13 @@ func NewCmdEdit(f *cmdutil.Factory) *cobra.Command {
 }
 
 func editComment(client *api.Client, issueKey, commentID, body, visibility string) (map[string]any, error) {
-	payload := map[string]any{"body": body}
+	// Cloud (v3) requires ADF; Server/DC (v2) uses plain string.
+	var bodyValue any = body
+	if client.IsCloud() {
+		bodyValue = convert.MarkdownToADF(body)
+	}
+
+	payload := map[string]any{"body": bodyValue}
 	if visibility != "" {
 		payload["visibility"] = map[string]any{
 			"type":  "role",

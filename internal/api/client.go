@@ -53,25 +53,35 @@ func (c *Client) ConfluenceAPIPath(resource string) string {
 // Get performs an authenticated GET request. If dest is non-nil, the response
 // body is JSON-decoded into dest.
 func (c *Client) Get(path string, dest any) (*http.Response, error) {
-	return c.do("GET", path, nil, dest)
+	return c.doWithHeaders("GET", path, nil, dest, nil)
 }
 
 // Post performs an authenticated POST request with a JSON body.
 func (c *Client) Post(path string, body any, dest any) (*http.Response, error) {
-	return c.do("POST", path, body, dest)
+	return c.doWithHeaders("POST", path, body, dest, nil)
+}
+
+// PostWithHeaders performs an authenticated POST with custom headers.
+func (c *Client) PostWithHeaders(path string, body any, dest any, headers map[string]string) (*http.Response, error) {
+	return c.doWithHeaders("POST", path, body, dest, headers)
 }
 
 // Put performs an authenticated PUT request with a JSON body.
 func (c *Client) Put(path string, body any, dest any) (*http.Response, error) {
-	return c.do("PUT", path, body, dest)
+	return c.doWithHeaders("PUT", path, body, dest, nil)
+}
+
+// PutWithHeaders performs an authenticated PUT with custom headers.
+func (c *Client) PutWithHeaders(path string, body any, dest any, headers map[string]string) (*http.Response, error) {
+	return c.doWithHeaders("PUT", path, body, dest, headers)
 }
 
 // Delete performs an authenticated DELETE request.
 func (c *Client) Delete(path string, dest any) (*http.Response, error) {
-	return c.do("DELETE", path, nil, dest)
+	return c.doWithHeaders("DELETE", path, nil, dest, nil)
 }
 
-func (c *Client) do(method, path string, body any, dest any) (*http.Response, error) {
+func (c *Client) doWithHeaders(method, path string, body any, dest any, extraHeaders map[string]string) (*http.Response, error) {
 	url := c.BaseURL + path
 
 	var bodyReader io.Reader
@@ -95,6 +105,9 @@ func (c *Client) do(method, path string, body any, dest any) (*http.Response, er
 		req.Header.Set("Accept", "application/json")
 		if body != nil {
 			req.Header.Set("Content-Type", "application/json")
+		}
+		for k, v := range extraHeaders {
+			req.Header.Set(k, v)
 		}
 
 		if c.Auth != nil {

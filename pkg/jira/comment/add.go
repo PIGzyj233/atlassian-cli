@@ -2,9 +2,9 @@ package comment
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/PigZyj2333/atlassian-cli/internal/api"
+	"github.com/PigZyj2333/atlassian-cli/internal/convert"
 	"github.com/PigZyj2333/atlassian-cli/internal/output"
 	"github.com/PigZyj2333/atlassian-cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
@@ -58,7 +58,13 @@ func NewCmdAdd(f *cmdutil.Factory) *cobra.Command {
 }
 
 func addComment(client *api.Client, issueKey, body, visibility string) (map[string]any, error) {
-	payload := map[string]any{"body": body}
+	// Cloud (v3) requires ADF; Server/DC (v2) uses plain string.
+	var bodyValue any = body
+	if client.IsCloud() {
+		bodyValue = convert.MarkdownToADF(body)
+	}
+
+	payload := map[string]any{"body": bodyValue}
 	if visibility != "" {
 		payload["visibility"] = map[string]any{
 			"type":  "role",
@@ -84,19 +90,12 @@ func addServiceDeskComment(client *api.Client, issueKey, body string, public boo
 	}
 
 	path := "/rest/servicedeskapi/request/" + issueKey + "/comment"
-	url := client.BaseURL + path
-
-	req, err := http.NewRequest("POST", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("creating ServiceDesk request: %w", err)
-	}
 
 	// The ServiceDesk API requires the X-ExperimentalApi header
-	req.Header.Set("X-ExperimentalApi", "opt-in")
+	headers := map[string]string{"X-ExperimentalApi": "opt-in"}
 
-	// Use the standard client Post which handles auth, JSON encoding, etc.
 	var result map[string]any
-	_, err = client.Post(path, payload, &result)
+	_, err := client.PostWithHeaders(path, payload, &result, headers)
 	if err != nil {
 		return nil, fmt.Errorf("adding ServiceDesk comment to %s: %w", issueKey, err)
 	}

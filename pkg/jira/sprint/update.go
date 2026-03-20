@@ -86,7 +86,7 @@ func updateSprint(client *api.Client, sprintID, name, state, startDate, endDate,
 
 	path := fmt.Sprintf("/rest/agile/1.0/sprint/%s", sprintID)
 	var result map[string]any
-	_, err := client.Post(path, body, &result)
+	_, err := client.Put(path, body, &result)
 	if err != nil {
 		return nil, fmt.Errorf("updating sprint %s: %w", sprintID, err)
 	}
