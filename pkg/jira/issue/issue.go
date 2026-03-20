@@ -14,6 +14,10 @@ func NewCmdIssue(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(NewCmdGet(f))
 	cmd.AddCommand(NewCmdCreate(f))
+	cmd.AddCommand(NewCmdUpdate(f))
+	cmd.AddCommand(NewCmdDelete(f))
+	cmd.AddCommand(NewCmdTransition(f))
+	cmd.AddCommand(NewCmdBatchCreate(f))
 
 	return cmd
 }
