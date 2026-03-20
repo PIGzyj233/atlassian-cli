@@ -4879,7 +4879,7 @@ git commit -m "feat(jira): add epic link command"
 - Create: `cli/pkg/confluence/auth/` — mirrors jira auth, shares same config file
 - Modify: `cli/pkg/confluence/root.go` — register auth and all subcommands
 
-- [ ] **Step 1: Create confluence auth commands**
+- [x] **Step 1: Create confluence auth commands**
 
 The confluence `auth` package can import and reuse the jira auth commands since they operate on the shared config file. Create thin wrappers:
 
@@ -4900,8 +4900,8 @@ func NewCmdAuth(f *cmdutil.Factory) *cobra.Command {
 }
 ```
 
-- [ ] **Step 2: Register auth in confluence root.go**
-- [ ] **Step 3: Commit**
+- [x] **Step 2: Register auth in confluence root.go**
+- [x] **Step 3: Commit**
 
 ```bash
 git add cli/pkg/confluence/auth/ cli/pkg/confluence/root.go
@@ -4929,7 +4929,7 @@ git commit -m "feat(confluence): add auth commands (shared with jira)"
 | `page history <id>` | GET | `/rest/api/content/{id}/history` | `--version`, `--raw` |
 | `page diff <id>` | GET | Fetch two versions and diff | `--from`, `--to` (both required) |
 
-- [ ] **Step 1: Implement `page get` (reference implementation)**
+- [x] **Step 1: Implement `page get` (reference implementation)**
 
 ```go
 // cli/pkg/confluence/page/get.go
@@ -5050,35 +5050,35 @@ func fetchPageByTitle(client *api.Client, space, title string, raw bool) (map[st
 }
 ```
 
-- [ ] **Step 2: Implement `page create`**
+- [x] **Step 2: Implement `page create`**
 
 Body: `{"type": "page", "title": "...", "space": {"key": "..."}, "body": {"storage": {"value": "...", "representation": "storage"}}, "ancestors": [{"id": "..."}]}`
 
 If `--format markdown` (default): convert Markdown content to Storage Format before sending.
 
-- [ ] **Step 3: Implement `page update`**
+- [x] **Step 3: Implement `page update`**
 
 Requires fetching current version number first: `GET /rest/api/content/{id}?expand=version`, then PUT with `version.number + 1`.
 
-- [ ] **Step 4: Implement `page delete`** (DELETE with `--confirm`)
+- [x] **Step 4: Implement `page delete`** (DELETE with `--confirm`)
 
-- [ ] **Step 5: Implement `page move`**
+- [x] **Step 5: Implement `page move`**
 
 API: `PUT /rest/api/content/{id}/move/{position}/{targetId}`
 
-- [ ] **Step 6: Implement `page children`**
+- [x] **Step 6: Implement `page children`**
 
 API: `GET /rest/api/content/{id}/child/page`
 
-- [ ] **Step 7: Implement `page tree`**
+- [x] **Step 7: Implement `page tree`**
 
 Recursive fetch: get space root pages, then children recursively up to `--limit`.
 
-- [ ] **Step 8: Implement `page history`**
+- [x] **Step 8: Implement `page history`**
 
 API: `GET /rest/api/content/{id}/history`
 
-- [ ] **Step 9: Implement `page diff`**
+- [x] **Step 9: Implement `page diff`**
 
 Fetch two versions by version number, convert both to Markdown, compute unified diff.
 
@@ -5090,11 +5090,11 @@ Fetch two versions by version number, convert both to Markdown, compute unified 
 // 4. Compute line-by-line diff
 ```
 
-- [ ] **Step 10: Register all page commands, build, test**
+- [x] **Step 10: Register all page commands, build, test**
 
 Run: `cd cli && make build && ./bin/confluence page --help`
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add cli/pkg/confluence/page/ cli/pkg/confluence/root.go
@@ -5113,8 +5113,8 @@ git commit -m "feat(confluence): add page get/create/update/delete/move/children
 
 If the query doesn't look like CQL (no `=`, `~`, `AND`, `OR`), wrap it as `text ~ "query"`.
 
-- [ ] **Step 1: Implement search**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement search**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/confluence/search/ cli/pkg/confluence/root.go
@@ -5133,8 +5133,8 @@ git commit -m "feat(confluence): add search command with CQL support"
 | `comment add <page-id>` | POST | `/rest/api/content` with type=comment | `--body` |
 | `comment reply <comment-id>` | POST | `/rest/api/content` with type=comment, ancestor=comment-id | `--body` |
 
-- [ ] **Step 1: Implement all 3 comment commands**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement all 3 comment commands**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/confluence/comment/ cli/pkg/confluence/root.go
@@ -5152,8 +5152,8 @@ git commit -m "feat(confluence): add comment list/add/reply commands"
 | `label list <page-id>` | GET | `/rest/api/content/{id}/label` | — |
 | `label add <page-id>` | POST | `/rest/api/content/{id}/label` | `--name` (body: `[{"prefix":"global","name":"..."}]`) |
 
-- [ ] **Step 1: Implement label commands**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement label commands**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/confluence/label/ cli/pkg/confluence/root.go
@@ -5178,7 +5178,7 @@ git commit -m "feat(confluence): add label list/add commands"
 
 > Note: `upload` requires multipart/form-data, not JSON. Use `mime/multipart` package.
 
-- [ ] **Step 1: Implement all 7 attachment commands**
+- [x] **Step 1: Implement all 7 attachment commands**
 
 For upload, use multipart form:
 ```go
@@ -5190,7 +5190,7 @@ writer.Close()
 // Set Content-Type to writer.FormDataContentType()
 ```
 
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/confluence/attachment/ cli/pkg/confluence/root.go
@@ -5207,8 +5207,8 @@ git commit -m "feat(confluence): add attachment list/upload/upload-batch/downloa
 |---------|--------|----------|-----------|
 | `user search <query>` | GET | Cloud: `/rest/api/search/user?cql=...`, Server: `/rest/api/user/search?username=...` | `--limit`, `--group` |
 
-- [ ] **Step 1: Implement user search with Cloud/Server routing**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement user search with Cloud/Server routing**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/confluence/user/ cli/pkg/confluence/root.go
@@ -5225,11 +5225,11 @@ git commit -m "feat(confluence): add user search command"
 |---------|--------|----------|-----------|
 | `analytics views <page-id>` | GET | `/rest/api/analytics/content/{id}/views` | `--include-title` |
 
-- [ ] **Step 1: Implement analytics views**
+- [x] **Step 1: Implement analytics views**
 
 Validate `client.IsCloud()` — Cloud only.
 
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/confluence/analytics/ cli/pkg/confluence/root.go
