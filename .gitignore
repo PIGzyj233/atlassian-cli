@@ -30,3 +30,5 @@ vendor/
 
 docs/superpowers/
 .claude
+.ace-tool/
+.worktrees/
