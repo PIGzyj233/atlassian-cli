@@ -28,7 +28,6 @@ config.yml
 # Go
 vendor/
 
-docs/superpowers/
 .claude
 .ace-tool/
 .worktrees/

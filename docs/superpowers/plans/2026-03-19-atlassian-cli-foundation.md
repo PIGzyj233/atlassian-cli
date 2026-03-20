@@ -4624,11 +4624,11 @@ git commit -m "feat(jira): add sprint list/issues/create/update/add-issues comma
 | `project components <key>` | GET | `/rest/api/{v}/project/{key}/components` | — |
 | `project version create <key>` | POST | `/rest/api/{v}/version` | `--name`, `--start-date`, `--release-date`, `--description`, `--file` |
 
-- [ ] **Step 1: Implement all 4 project commands**
+- [x] **Step 1: Implement all 4 project commands**
 
 Note for `version create`: if `--file` provided, read JSON array and batch create serially. Otherwise single creation with `--name` (required).
 
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/project/ cli/pkg/jira/root.go
@@ -4646,8 +4646,8 @@ git commit -m "feat(jira): add project list/versions/components/version-create c
 | `worklog list <key>` | GET | `/rest/api/{v}/issue/{key}/worklog` | — |
 | `worklog add <key>` | POST | `/rest/api/{v}/issue/{key}/worklog` | `--time-spent`, `--comment`, `--started` |
 
-- [ ] **Step 1: Implement both worklog commands**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement both worklog commands**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/worklog/ cli/pkg/jira/root.go
@@ -4666,11 +4666,11 @@ git commit -m "feat(jira): add worklog list/add commands"
 | `watcher add <key>` | POST | `/rest/api/{v}/issue/{key}/watchers` | `--user` (body: JSON string of user identifier) |
 | `watcher remove <key>` | DELETE | `/rest/api/{v}/issue/{key}/watchers?username=X` or `?accountId=X` | `--username`, `--account-id` |
 
-- [ ] **Step 1: Implement all 3 watcher commands**
+- [x] **Step 1: Implement all 3 watcher commands**
 
 Note: `watcher add` POST body is a plain JSON string (the user identifier), not a JSON object.
 
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/watcher/ cli/pkg/jira/root.go
@@ -4690,8 +4690,8 @@ git commit -m "feat(jira): add watcher list/add/remove commands"
 | `link create-remote <key>` | POST | `/rest/api/{v}/issue/{key}/remotelink` | `--url`, `--title`, `--summary` |
 | `link remove <link-id>` | DELETE | `/rest/api/{v}/issueLink/{id}` | — |
 
-- [ ] **Step 1: Implement all 4 link commands**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement all 4 link commands**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/link/ cli/pkg/jira/root.go
@@ -4709,11 +4709,11 @@ git commit -m "feat(jira): add link types/create/create-remote/remove commands"
 | `attachment download <key>` | GET | `/rest/api/{v}/issue/{key}?fields=attachment`, then download each | Downloads to current directory |
 | `attachment images <key>` | GET | `/rest/api/{v}/issue/{key}?fields=attachment` | Returns base64-encoded image data in JSON |
 
-- [ ] **Step 1: Implement attachment commands**
+- [x] **Step 1: Implement attachment commands**
 
 For `download`: Get issue attachments, then GET each `attachment.content` URL to download the file.
 
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/attachment/ cli/pkg/jira/root.go
@@ -4733,8 +4733,8 @@ git commit -m "feat(jira): add attachment download/images commands"
 
 > Note: SLA endpoint uses `/rest/servicedeskapi/` prefix.
 
-- [ ] **Step 1: Implement SLA commands**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement SLA commands**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/sla/ cli/pkg/jira/root.go
@@ -4755,8 +4755,8 @@ git commit -m "feat(jira): add sla get/dates commands"
 > Note: Dev status API uses `/rest/dev-status/` prefix and requires issue ID (not key).
 > First resolve key→ID via `GET /rest/api/{v}/issue/{key}?fields=id`.
 
-- [ ] **Step 1: Implement dev commands**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement dev commands**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/dev/ cli/pkg/jira/root.go
@@ -4773,11 +4773,11 @@ git commit -m "feat(jira): add dev info/batch-info commands"
 |---------|--------|----------|-----------|
 | `changelog batch` | GET | `/rest/api/3/issue/{key}/changelog` per key | `--keys`, `--fields`, `--limit` |
 
-- [ ] **Step 1: Implement changelog batch**
+- [x] **Step 1: Implement changelog batch**
 
 Validate `client.IsCloud()` — return error if Server/DC. Iterate over `--keys`, call changelog API for each.
 
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/changelog/ cli/pkg/jira/root.go
@@ -4798,8 +4798,8 @@ git commit -m "feat(jira): add changelog batch command (Cloud only)"
 
 > Reference: `src/mcp_atlassian/jira/forms_api.py` for exact endpoint patterns.
 
-- [ ] **Step 1: Implement form commands**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement form commands**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/form/ cli/pkg/jira/root.go
@@ -4820,8 +4820,8 @@ git commit -m "feat(jira): add form list/get/update commands (ProForma)"
 
 > Validate: return error if `client.IsCloud()` (spec says Server/DC only, but service desk API also works on Cloud — validate based on actual API availability).
 
-- [ ] **Step 1: Implement servicedesk commands**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement servicedesk commands**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/servicedesk/ cli/pkg/jira/root.go
@@ -4838,11 +4838,11 @@ git commit -m "feat(jira): add servicedesk get/queues/queue-issues commands"
 |---------|--------|----------|-------|
 | `user get <identifier>` | GET | Cloud: `/rest/api/3/user?accountId=X`, Server: `/rest/api/2/user?username=X` | Auto-detect identifier type |
 
-- [ ] **Step 1: Implement user get**
+- [x] **Step 1: Implement user get**
 
 Detect if identifier looks like an account ID (contains `:`) or is an email/username.
 
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/user/ cli/pkg/jira/root.go
@@ -4861,8 +4861,8 @@ git commit -m "feat(jira): add user get command"
 
 > Implementation: Uses `issue update` internally — sets the epic link custom field.
 
-- [ ] **Step 1: Implement epic link**
-- [ ] **Step 2: Register, build, test, commit**
+- [x] **Step 1: Implement epic link**
+- [x] **Step 2: Register, build, test, commit**
 
 ```bash
 git add cli/pkg/jira/epic/ cli/pkg/jira/root.go
