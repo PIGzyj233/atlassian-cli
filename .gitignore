@@ -1,0 +1,29 @@
+# Binaries
+atlassian-cli
+atlassian-cli.exe
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build
+/dist/
+/bin/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config with secrets
+.env
+config.yaml
+config.yml
+
+# Go
+vendor/
