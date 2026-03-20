@@ -32,18 +32,11 @@ builds:
       - -s -w -X main.version={{.Version}}
 
 archives:
-  - id: jira
+  - id: atlassian-cli
     builds:
       - jira
-    name_template: "jira_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    format_overrides:
-      - goos: windows
-        format: zip
-
-  - id: confluence
-    builds:
       - confluence
-    name_template: "confluence_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "atlassian-cli_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
