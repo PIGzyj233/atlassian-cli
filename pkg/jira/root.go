@@ -2,6 +2,7 @@ package jira
 
 import (
 	"github.com/PigZyj2333/atlassian-cli/pkg/cmdutil"
+	"github.com/PigZyj2333/atlassian-cli/pkg/jira/auth"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +23,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Version = f.Version
 
-	// Subcommands will be registered here in later tasks
+	cmd.AddCommand(auth.NewCmdAuth(f))
 
 	return cmd
 }

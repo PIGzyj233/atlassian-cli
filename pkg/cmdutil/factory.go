@@ -1,17 +1,27 @@
 package cmdutil
 
+import "github.com/PigZyj2333/atlassian-cli/internal/config"
+
 // Factory holds shared dependencies for all commands.
 type Factory struct {
-	// Will be populated in later tasks:
-	// Config  *config.Config
-	// Client  *api.Client
-	// Output  string
-	Version string
+	Config     *config.Config
+	ConfigPath string
+	Version    string
 }
 
-// NewFactory creates a Factory with defaults.
+// NewFactory creates a Factory, loading config from the default path.
 func NewFactory(version string) *Factory {
+	configPath := config.DefaultConfigPath()
+	cfg, err := config.Load()
+	if err != nil {
+		// Config may not exist yet (first run); use empty config
+		cfg = &config.Config{
+			Hosts: make(map[string]*config.HostConfig),
+		}
+	}
 	return &Factory{
-		Version: version,
+		Config:     cfg,
+		ConfigPath: configPath,
+		Version:    version,
 	}
 }
