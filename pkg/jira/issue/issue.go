@@ -13,6 +13,7 @@ func NewCmdIssue(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.AddCommand(NewCmdGet(f))
+	cmd.AddCommand(NewCmdCreate(f))
 
 	return cmd
 }
