@@ -206,3 +206,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 - **Issues**: https://github.com/PigZyj2333/atlassian-cli/issues
 - **Inspired by**: [mcp-atlassian](https://github.com/sooperset/mcp-atlassian) — the MCP server for Atlassian
+
+## Community support
+
+Many thanks to the [linux.do](https://linux.do/) community; it's a very loving and professional community.
