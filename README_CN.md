@@ -206,3 +206,7 @@ MIT License — 详见 [LICENSE](LICENSE)。
 
 - **Issues**：https://github.com/PigZyj2333/atlassian-cli/issues
 - **灵感来源**：[mcp-atlassian](https://github.com/sooperset/mcp-atlassian) — Atlassian 的 MCP 服务器
+
+## 社区支持
+
+非常感谢[linux.do](https://linux.do/)提供的支持，这是一个有爱并且专业的社区
